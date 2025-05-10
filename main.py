@@ -59,10 +59,10 @@ def send_welcome(message):
         "🎲 Semua Game Boleh Main Dan Cuci !!\n"
     )
     # 创建内联按钮
-   markup = InlineKeyboardMarkup()
-join_btn = InlineKeyboardButton("👉 Join Channel", url=CHANNEL_URL)
-markup.add(join_btn)
-bot.reply_to(message, welcome_text, reply_markup=markup)
+    markup = InlineKeyboardMarkup()
+    join_btn = InlineKeyboardButton("👉 Join Channel", url=CHANNEL_URL)
+    markup.add(join_btn)
+    bot.reply_to(message, welcome_text, reply_markup=markup)
     add_user(message.from_user.id, message.from_user.first_name, message.from_user.username)
     bot.send_message(
         ADMIN_ID, 
