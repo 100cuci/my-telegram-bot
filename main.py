@@ -9,6 +9,7 @@ import time
 import pytz
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+# 从环境变量读取 TOKEN
 TOKEN = os.environ.get('TELEGRAM_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
