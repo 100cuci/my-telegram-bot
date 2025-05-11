@@ -1,6 +1,4 @@
 import telebot
-from flask import Flask
-import threading
 import json
 import os
 from datetime import datetime
@@ -8,11 +6,10 @@ import schedule
 import time
 import pytz
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+import threading
 
-# 从环境变量读取 TOKEN
 TOKEN = os.environ.get('TELEGRAM_TOKEN')
 bot = telebot.TeleBot(TOKEN)
-app = Flask(__name__)
 
 USER_FILE = 'users.json'
 ADMIN_ID = 7530630528  # 请替换为你的 Telegram 用户ID
@@ -42,24 +39,18 @@ def add_user(user_id, first_name, username):
         })
         save_users(users)
 
-@app.route('/')
-def home():
-    return "Bot is running!"
-
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     welcome_text = (
         "😎 SELAMAT DATANG Bossku !!\n"
         "🙌🏻 BERMINAT CLAIM FREE KREDIT  RM 5 - RM 35 ?\n"
         "⚠️ Mesti Kena Join Channel\n"
-        "➡️ STEP 1\n"
-        " Sile Join Channel\n"
-        "➡️ STEP 2\n"
-        " Lepas Join Channel Sile Lihat Dalam post ade cara Claim Free kredit\n"
-        "➡️ STEP 3\n"
+        "🔜 STEP 1  \n"
+        "🔜 Sile Join Channel \n"
+        "🔜 STEP 2 \n"
+        "🔜 Lepas Join Channel Cari Post Yang Cara Claim Free Kredit \n"
         "🎲 Semua Game Boleh Main Dan Cuci !!\n"
     )
-    # 创建内联按钮
     markup = InlineKeyboardMarkup()
     join_btn = InlineKeyboardButton("👉 Join Channel", url=CHANNEL_URL)
     markup.add(join_btn)
@@ -124,15 +115,10 @@ def schedule_report():
         schedule.run_pending()
         time.sleep(30)
 
-def run_bot():
+if __name__ == "__main__":
+    # 启动定时任务线程
+    threading.Thread(target=schedule_report, daemon=True).start()
+    # 启动 Telegram Bot
+    print("Bot polling started")
     bot.remove_webhook()
     bot.polling()
-
-def run_web():
-    port = int(os.environ.get("PORT", 81))
-    app.run(host="0.0.0.0", port=port)
-
-if __name__ == "__main__":
-    threading.Thread(target=run_bot).start()
-    threading.Thread(target=run_web).start()
-    threading.Thread(target=schedule_report).start()
