@@ -7,9 +7,11 @@ import time
 import pytz
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import threading
+from flask import Flask
 
 TOKEN = os.environ.get('TELEGRAM_TOKEN')
 bot = telebot.TeleBot(TOKEN)
+app = Flask(__name__)
 
 USER_FILE = 'users.json'
 ADMIN_ID = 7530630528  # 请替换为你的 Telegram 用户ID
@@ -38,6 +40,10 @@ def add_user(user_id, first_name, username):
             'date': today
         })
         save_users(users)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -115,8 +121,19 @@ def schedule_report():
         schedule.run_pending()
         time.sleep(30)
 
-if __name__ == "__main__":
-    threading.Thread(target=schedule_report, daemon=True).start()
+def run_bot():
     print("Bot polling started")
     bot.remove_webhook()
     bot.polling()
+
+def run_schedule():
+    schedule_report()
+
+def run_web():
+    port = int(os.environ.get("PORT", 81))
+    app.run(host="0.0.0.0", port=port)
+
+if __name__ == "__main__":
+    threading.Thread(target=run_bot, daemon=True).start()
+    threading.Thread(target=run_schedule, daemon=True).start()
+    run_web()
