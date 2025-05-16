@@ -91,9 +91,17 @@ def send_help(message):
 def send_daily_report():
     users = load_users()
     today = datetime.now(MALAYSIA_TZ).strftime('%Y-%m-%d')
-    count = sum(1 for u in users if u['date'] == today)
+    new_users = [u for u in users if u['date'] == today]
+    count = len(new_users)
     total = len(users)
+    usernames = '\n'.join([
+        f"{u['first_name']} (@{u['username'] if u['username'] else '无'})" for u in new_users
+    ])
     msg = f"📊 今日新用户数：{count}\n👥 总用户数：{total}"
+    if count > 0:
+        msg += f"\n\n今日新用户列表：\n{usernames}"
+    else:
+        msg += "\n\n今日暂无新用户。"
     bot.send_message(ADMIN_ID, msg)
 
 def remind_users_not_in_channel():
