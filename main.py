@@ -1,4 +1,6 @@
 import telebot
+from flask import Flask, request
+import threading
 import json
 import os
 from datetime import datetime
@@ -6,11 +8,23 @@ import schedule
 import time
 import pytz
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-import threading
-from flask import Flask
+import logging
+from waitress import serve
 
-TOKEN = os.environ.get('TELEGRAM_TOKEN')
-bot = telebot.TeleBot(TOKEN)
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# 从环境变量获取配置
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+WEBHOOK_URL = os.getenv('WEBHOOK_URL')
+WEBHOOK_PORT = int(os.getenv('PORT', 10000))
+
+# 初始化 bot 和 Flask
+bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
 USER_FILE = 'users.json'
@@ -18,6 +32,9 @@ ADMIN_ID = 7530630528  # 请替换为你的 Telegram 用户ID
 CHANNEL_USERNAME = '@Mega888100Cuci'
 CHANNEL_URL = 'https://t.me/Mega888100Cuci'
 MALAYSIA_TZ = pytz.timezone('Asia/Kuala_Lumpur')
+
+# 用户数据存储
+user_data = {}
 
 def load_users():
     if not os.path.exists(USER_FILE):
@@ -41,9 +58,32 @@ def add_user(user_id, first_name, username):
         })
         save_users(users)
 
-@app.route('/')
-def home():
-    return "Bot is running!"
+# 设置 webhook
+def set_webhook():
+    try:
+        bot.remove_webhook()
+        time.sleep(1)
+        bot.set_webhook(url=WEBHOOK_URL)
+        logger.info(f"Webhook set to {WEBHOOK_URL}")
+    except Exception as e:
+        logger.error(f"Error setting webhook: {e}")
+
+# 启动 webhook
+set_webhook()
+
+# 处理 webhook 请求
+@app.route('/', methods=['POST'])
+def webhook():
+    if request.headers.get('content-type') == 'application/json':
+        update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
+        bot.process_new_updates([update])
+        return 'OK'
+    return 'Error'
+
+# 处理 GET 请求以保持服务活跃
+@app.route('/', methods=['GET'])
+def index():
+    return 'Bot is running!'
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -129,19 +169,12 @@ def schedule_report():
         schedule.run_pending()
         time.sleep(30)
 
-def run_bot():
-    print("Bot polling started")
-    bot.remove_webhook()
-    bot.polling()
+def run_flask():
+    serve(app, host='0.0.0.0', port=WEBHOOK_PORT)
 
-def run_schedule():
-    schedule_report()
-
-def run_web():
-    port = int(os.environ.get("PORT", 81))
-    app.run(host="0.0.0.0", port=port)
+# 启动 Flask 服务器
+flask_thread = threading.Thread(target=run_flask)
+flask_thread.start()
 
 if __name__ == "__main__":
-    threading.Thread(target=run_bot, daemon=True).start()
-    threading.Thread(target=run_schedule, daemon=True).start()
-    run_web()
+    threading.Thread(target=schedule_report).start() 
