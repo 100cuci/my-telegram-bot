@@ -89,13 +89,16 @@ def index():
 def send_welcome(message):
     welcome_text = (
         "😎 SELAMAT DATANG Bossku !!\n"
-        "🙌🏻 BERMINAT CLAIM FREE KREDIT  RM 5 - RM 35 ?\n"
-        "⚠️ Mesti Kena Join Channel\n"
+        "🙌🏻 BERMINAT CLAIM FREE KREDIT RM 35 ?\n"
+        "⚠️ Sile Join Channel Dalam ade cara ke 3 company claim free kredit total RM 35\n"
         "🔜 STEP 1  \n"
-        "🔜 Sile Join Channel \n"
+        "🔜 Sile Tekan Butang Bawah Join Channel \n"
         "🔜 STEP 2 \n"
-        "🔜 Lepas Join Channel Cari Post Yang Cara Claim Free Kredit \n"
-        "🎲 Semua Game Boleh Main Dan Cuci !!\n"
+        "🔜 Lepas Join Channel Cari Post Yang Ade 3 link Claim Free Kredit \n"
+        "🔜 STEP 3\n"
+        "🔜 Lepas Register ID akan dapat FREE KREDIT\n"
+        "🎲 FREE KREDIT Boleh Semua Game Dan Cuci !!\n"
+        "🎲 Mne Company Ong Boss Boleh Cuba Topup Dan Cuci Lebih ye\n"
     )
     markup = InlineKeyboardMarkup()
     join_btn = InlineKeyboardButton("👉 Join Channel", url=CHANNEL_URL)
@@ -137,7 +140,7 @@ def send_daily_report():
     usernames = '\n'.join([
         f"{u['first_name']} (@{u['username'] if u['username'] else '无'})" for u in new_users
     ])
-    msg = f"📊 今日新用户数：{count}\n👥 总用户数：{total}"
+    msg = f"�� 今日新用户数：{count}\n👥 总用户数：{total}"
     if count > 0:
         msg += f"\n\n今日新用户列表：\n{usernames}"
     else:
