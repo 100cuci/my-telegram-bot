@@ -71,10 +71,7 @@ def track_facebook_event(event_name, user_data, test_event_code=None):
             'event_name': event_name,
             'event_time': int(time.time()),
             'user_data': {
-                'em': user_data.get('email', ''),
-                'ph': user_data.get('phone', ''),
-                'client_ip_address': user_data.get('ip', ''),
-                'client_user_agent': user_data.get('user_agent', '')
+                'external_id': str(user_data.get('user_id', ''))
             },
             'action_source': 'chat'
         }
@@ -162,7 +159,7 @@ def send_welcome(message):
         "⚠️ Sile Join Channel Dalam ade cara ke 3 company claim free kredit total RM 35\n"
         "🔜 STEP 1  \n"
         "🔜 Sile Tekan Butang Bawah Join Channel \n"
-        "🔜 STEP 2 \n"
+        "�� STEP 2 \n"
         "🔜 Lepas Join Channel Cari Post Yang Ade 3 link Claim Free Kredit \n"
         "🔜 STEP 3\n"
         "🔜 Lepas Register ID akan dapat FREE KREDIT\n"
