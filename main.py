@@ -76,14 +76,14 @@ def track_facebook_event(event_name, user_data, test_event_code=None):
                 'client_ip_address': user_data.get('ip', ''),
                 'client_user_agent': user_data.get('user_agent', '')
             },
-            'action_source': 'telegram'
+            'action_source': 'chat'
         }
-        if test_event_code:
-            event['test_event_code'] = test_event_code
         data = {
             'data': [event],
             'access_token': FACEBOOK_ACCESS_TOKEN
         }
+        if test_event_code:
+            data['test_event_code'] = test_event_code
         response = requests.post(url, json=data)
         if response.status_code == 200:
             logger.info(f"Successfully tracked {event_name} event")
