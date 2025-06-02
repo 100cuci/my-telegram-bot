@@ -10,6 +10,7 @@ import pytz
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import logging
 from waitress import serve
+import requests
 
 # 配置日志
 logging.basicConfig(
@@ -22,6 +23,8 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 WEBHOOK_PORT = int(os.getenv('PORT', 10000))
+FACEBOOK_PIXEL_ID = os.getenv('FACEBOOK_PIXEL_ID')
+FACEBOOK_ACCESS_TOKEN = os.getenv('FACEBOOK_ACCESS_TOKEN')
 
 # 初始化 bot 和 Flask
 bot = telebot.TeleBot(BOT_TOKEN)
@@ -32,9 +35,6 @@ ADMIN_ID = 7530630528  # 请替换为你的 Telegram 用户ID
 CHANNEL_USERNAME = '@Mega888100Cuci'
 CHANNEL_URL = 'https://t.me/Mega888100Cuci'
 MALAYSIA_TZ = pytz.timezone('Asia/Kuala_Lumpur')
-
-# 用户数据存储
-user_data = {}
 
 def load_users():
     if not os.path.exists(USER_FILE):
@@ -57,6 +57,30 @@ def add_user(user_id, first_name, username):
             'date': today
         })
         save_users(users)
+
+# Facebook Conversion API 事件上报
+def track_facebook_event(event_name, user_data):
+    try:
+        url = f'https://graph.facebook.com/v17.0/{FACEBOOK_PIXEL_ID}/events'
+        data = {
+            'data': [{
+                'event_name': event_name,
+                'event_time': int(time.time()),
+                'user_data': {
+                    'external_id': str(user_data.get('user_id', '')),
+                    'client_user_agent': user_data.get('user_agent', ''),
+                },
+                'action_source': 'system_generated'
+            }],
+            'access_token': FACEBOOK_ACCESS_TOKEN
+        }
+        response = requests.post(url, json=data)
+        if response.status_code == 200:
+            logger.info(f"Successfully tracked {event_name} event")
+        else:
+            logger.error(f"Failed to track {event_name} event: {response.text}")
+    except Exception as e:
+        logger.error(f"Error tracking Facebook event: {e}")
 
 # 设置 webhook
 def set_webhook():
@@ -104,6 +128,16 @@ def send_welcome(message):
     join_btn = InlineKeyboardButton("👉 Join Channel", url=CHANNEL_URL)
     markup.add(join_btn)
     bot.reply_to(message, welcome_text, reply_markup=markup)
+
+    # 上报 Facebook Pixel 事件
+    user_info = {
+        'user_id': message.from_user.id,
+        'username': message.from_user.username,
+        'first_name': message.from_user.first_name,
+        'user_agent': message.json.get('user_agent', '') if hasattr(message, 'json') else ''
+    }
+    track_facebook_event('StartBot', user_info)
+
     add_user(message.from_user.id, message.from_user.first_name, message.from_user.username)
     bot.send_message(
         ADMIN_ID, 
@@ -116,6 +150,9 @@ def send_welcome(message):
                 message.chat.id,
                 "⚠️ Anda belum join channel kami! Sila join channel untuk dapatkan free kredit.\n\n" + CHANNEL_URL
             )
+            track_facebook_event('NotJoinedChannel', user_info)
+        else:
+            track_facebook_event('JoinedChannel', user_info)
     except Exception as e:
         print(f"检测频道成员异常: {e}")
         bot.send_message(
@@ -140,7 +177,7 @@ def send_daily_report():
     usernames = '\n'.join([
         f"{u['first_name']} (@{u['username'] if u['username'] else '无'})" for u in new_users
     ])
-    msg = f"�� 今日新用户数：{count}\n👥 总用户数：{total}"
+    msg = f"📊 今日新用户数：{count}\n👥 总用户数：{total}"
     if count > 0:
         msg += f"\n\n今日新用户列表：\n{usernames}"
     else:
@@ -180,4 +217,4 @@ flask_thread = threading.Thread(target=run_flask)
 flask_thread.start()
 
 if __name__ == "__main__":
-    threading.Thread(target=schedule_report).start() 
+    threading.Thread(target=schedule_report).start()
